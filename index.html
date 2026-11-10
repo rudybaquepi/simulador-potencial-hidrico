@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Potencial Hídrico Vegetal</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#f4f8fb;
+    padding:20px;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    color:#2c3e50;
+    margin-bottom:20px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+}
+
+.inputs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+label{
+    display:block;
+    margin-bottom:8px;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    font-size:16px;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    border:none;
+    background:#27ae60;
+    color:white;
+    font-size:18px;
+    border-radius:10px;
+    cursor:pointer;
+    margin-top:20px;
+}
+
+button:hover{
+    background:#219150;
+}
+
+.resultados{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+}
+
+.box{
+    padding:15px;
+    border-radius:10px;
+    background:#ecf0f1;
+    text-align:center;
+}
+
+.box h3{
+    margin-bottom:10px;
+}
+
+.valor{
+    font-size:28px;
+    font-weight:bold;
+}
+
+.estado{
+    text-align:center;
+    margin-top:20px;
+}
+
+.estado h2{
+    margin-bottom:10px;
+}
+
+.celula{
+    font-size:100px;
+    transition:0.5s;
+}
+
+.turgente{
+    color:green;
+}
+
+.flacida{
+    color:orange;
+}
+
+.plasmolizada{
+    color:red;
+}
+
+.feedback{
+    margin-top:20px;
+    padding:20px;
+    border-radius:10px;
+    background:#eef8ff;
+    line-height:1.6;
+}
+
+.gradiente-container{
+    margin-top:20px;
+}
+
+.gradiente-barra{
+    width:100%;
+    height:30px;
+    background:#ddd;
+    border-radius:50px;
+    overflow:hidden;
+}
+
+.gradiente-indicador{
+    height:100%;
+    width:50%;
+    transition:0.5s;
+}
+
+.positivo{
+    background:green;
+}
+
+.negativo{
+    background:red;
+}
+
+.neutro{
+    background:orange;
+}
+
+@media (max-width:768px){
+
+.inputs{
+    grid-template-columns:1fr;
+}
+
+.resultados{
+    grid-template-columns:1fr;
+}
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>🌿 Simulador de Potencial Hídrico de la Célula Vegetal</h1>
+
+<div class="card">
+
+<div class="inputs">
+
+<div>
+<label>Potencial Osmótico Ψh (MPa)</label>
+<input type="number" id="osm" step="0.1" value="-1.0">
+</div>
+
+<div>
+<label>Potencial de Presión Ψp (MPa)</label>
+<input type="number" id="presion" step="0.1" value="0.3">
+</div>
+
+<div>
+<label>Potencial del Medio Externo Ψe (MPa)</label>
+<input type="number" id="externo" step="0.1" value="-0.4">
+</div>
+
+<div>
+<label>Temperatura (Opcional)</label>
+<input type="number" id="temp" value="25">
+</div>
+
+</div>
+
+<button onclick="calcular()">
+Calcular
+</button>
+
+</div>
+
+<div class="card">
+
+<div class="resultados">
+
+<div class="box">
+<h3>Ψ Célula</h3>
+<div class="valor" id="potencialCelula">
+-0.70
+</div>
+</div>
+
+<div class="box">
+<h3>Gradiente</h3>
+<div class="valor" id="gradiente">
+0.30
+</div>
+</div>
+
+<div class="box">
+<h3>Flujo</h3>
+<div class="valor" id="flujo">
+⬇
+</div>
+</div>
+
+</div>
+
+<div class="gradiente-container">
+
+<h3>Gradiente Hídrica</h3>
+
+<div class="gradiente-barra">
+<div class="gradiente-indicador positivo" id="barra"></div>
+</div>
+
+</div>
+
+<div class="estado">
+
+<h2 id="estadoTexto">TURGENTE</h2>
+
+<div class="celula turgente" id="celula">
+🟢
+</div>
+
+</div>
+
+<div class="feedback" id="feedback">
+
+La célula presenta una condición de turgencia moderada.
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function calcular(){
+
+let osm = parseFloat(document.getElementById('osm').value);
+let presion = parseFloat(document.getElementById('presion').value);
+let externo = parseFloat(document.getElementById('externo').value);
+
+let potencialCelula = osm + presion;
+let gradiente = externo - potencialCelula;
+
+document.getElementById('potencialCelula').innerHTML =
+potencialCelula.toFixed(2);
+
+document.getElementById('gradiente').innerHTML =
+gradiente.toFixed(2);
+
+let feedback = "";
+let estado = "";
+let flujo = "";
+let barra = document.getElementById("barra");
+let celula = document.getElementById("celula");
+
+if(gradiente > 0.05){
+
+flujo = "⬇";
+estado = "TURGENTE";
+
+feedback =
+"✅ El potencial hídrico del medio externo es mayor que el de la célula. El agua ingresa a la célula por ósmosis. La vacuola aumenta de tamaño, incrementa la presión de turgencia y la célula mantiene una condición favorable para el crecimiento.";
+
+celula.innerHTML="🟢";
+celula.className="celula turgente";
+
+barra.className="gradiente-indicador positivo";
+barra.style.width=Math.min(100,50 + gradiente*20)+"%";
+
+}
+
+else if(gradiente < -0.05){
+
+flujo = "⬆";
+estado = "PLASMOLIZADA";
+
+feedback =
+"⚠️ El potencial hídrico del medio externo es menor que el de la célula. El agua sale de la célula siguiendo la gradiente de potencial hídrico. La vacuola pierde volumen y puede ocurrir plasmólisis.";
+
+celula.innerHTML="🔴";
+celula.className="celula plasmolizada";
+
+barra.className="gradiente-indicador negativo";
+barra.style.width=Math.min(100,Math.abs(gradiente)*20)+"%";
+
+}
+
+else{
+
+flujo = "↔";
+estado = "EQUILIBRIO";
+
+feedback =
+"🟡 El potencial hídrico interno y externo son similares. No existe flujo neto de agua. La célula se encuentra en equilibrio dinámico.";
+
+celula.innerHTML="🟡";
+celula.className="celula flacida";
+
+barra.className="gradiente-indicador neutro";
+barra.style.width="50%";
+
+}
+
+document.getElementById('estadoTexto').innerHTML = estado;
+document.getElementById('flujo').innerHTML = flujo;
+document.getElementById('feedback').innerHTML = feedback;
+
+}
+
+calcular();
+
+</script>
+
+</body>
+</html>
